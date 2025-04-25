@@ -6,6 +6,7 @@ import { Amplify } from "aws-amplify";
 import outputs from "../amplify_outputs.json";
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
+import { parseAmplifyConfig } from 'aws-amplify/utils';
 
 Amplify.configure(outputs);
 
