@@ -1,33 +1,33 @@
-import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
+import { useEffect} from "react";
 import { useAuthenticator } from '@aws-amplify/ui-react';
-import { generateClient } from "aws-amplify/data";
 import { get } from 'aws-amplify/api';
+import { fetchAuthSession } from 'aws-amplify/auth';
 
-const client = generateClient<Schema>();
 
 function App() {
   const { user, signOut } = useAuthenticator();
-  const [setNotas] = useState<any>([]);
 
   useEffect(() => {
     const fetchNotas = async () => {
       try {
-        const restOp = get({
+        const { tokens } = await fetchAuthSession();
+        const idToken = tokens?.idToken?.toString();
+        const restOperation = get({
           apiName: 'myRestApi',
           path: '/notas',
           options: {
-            retryStrategy: { strategy: 'no-retry' },
+            headers: {
+              Authorization: idToken!,
+            },
           },
         });
-        const response = await restOp.response;
+        const response = await restOperation.response;
         const data = await response.body.json();
         console.log("Notas desde API:", data);
       } catch (error: any) {
         console.error("Error al obtener notas:", await error.response.body.text());
       }
     };
-
     fetchNotas();
   }, []);
 
