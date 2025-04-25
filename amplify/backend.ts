@@ -9,7 +9,6 @@ import {
   LambdaIntegration,
   RestApi,
 } from "aws-cdk-lib/aws-apigateway";
-import { Policy, PolicyStatement } from "aws-cdk-lib/aws-iam";
 
 // 2. Recursos del backend que ya tenés
 import { auth } from "./auth/resource";
