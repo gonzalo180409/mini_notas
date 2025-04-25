@@ -18,15 +18,6 @@ Amplify.configure(
       REST: outputs.custom.API,
     },
   },
-  {
-    API: {
-      REST: {
-        retryStrategy: {
-          strategy: 'no-retry',
-        },
-      },
-    },
-  }
 );
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
