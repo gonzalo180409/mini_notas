@@ -1,9 +1,6 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
 
-let notas = [
-  { id: "1", content: "Primera nota desde Lambda" },
-  { id: "2", content: "Otra nota más" },
-];
+let notas: { id: string; content: string; userId: string }[] = [];
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   console.log("event", event);
@@ -14,6 +11,10 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
   };
 
+  // ✅ Obtener el userId del token Cognito
+  const claims = JSON.parse(event.requestContext.authorizer?.jwt?.claims || '{}');
+  const userId = claims.sub;
+
   if (event.httpMethod === "OPTIONS") {
     return {
       statusCode: 200,
@@ -23,10 +24,12 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   }
 
   if (event.httpMethod === "GET") {
+    // ✅ Devolver solo las notas del usuario autenticado
+    const userNotas = notas.filter(n => n.userId === userId);
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(notas),
+      body: JSON.stringify(userNotas),
     };
   }
 
@@ -44,6 +47,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     const newNota = {
       id: String(Date.now()),
       content: body.content,
+      userId: userId, // ✅ Asociar la nota al usuario autenticado
     };
 
     notas.push(newNota);
