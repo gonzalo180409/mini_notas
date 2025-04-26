@@ -1,19 +1,15 @@
 import type { APIGatewayProxyHandler } from "aws-lambda";
+import { generateClient } from "aws-amplify/data";
+import type { Schema } from "../../data/resource"; // ajustá si tu ruta es diferente
 
-let notas: { id: string; content: string; userId: string }[] = [];
+const client = generateClient<Schema>();
 
 export const handler: APIGatewayProxyHandler = async (event) => {
-  console.log("event", event);
-
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "*",
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS,PUT,DELETE",
   };
-
-  // ✅ Obtener el userId del token Cognito
-  const claims = JSON.parse(event.requestContext.authorizer?.jwt?.claims || '{}');
-  const userId = claims.sub;
 
   if (event.httpMethod === "OPTIONS") {
     return {
@@ -24,13 +20,21 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   }
 
   if (event.httpMethod === "GET") {
-    // ✅ Devolver solo las notas del usuario autenticado
-    const userNotas = notas.filter(n => n.userId === userId);
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(userNotas),
-    };
+    try {
+      const result = await client.models.Nota.list();
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(result.data),
+      };
+    } catch (err) {
+      console.error("Error en GET:", err);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: "Error al obtener notas" }),
+      };
+    }
   }
 
   if (event.httpMethod === "POST") {
@@ -44,19 +48,24 @@ export const handler: APIGatewayProxyHandler = async (event) => {
       };
     }
 
-    const newNota = {
-      id: String(Date.now()),
-      content: body.content,
-      userId: userId, // ✅ Asociar la nota al usuario autenticado
-    };
+    try {
+      const result = await client.models.Nota.create({
+        content: body.content,
+      });
 
-    notas.push(newNota);
-
-    return {
-      statusCode: 201,
-      headers,
-      body: JSON.stringify(newNota),
-    };
+      return {
+        statusCode: 201,
+        headers,
+        body: JSON.stringify(result.data),
+      };
+    } catch (err) {
+      console.error("Error en POST:", err);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: "Error al crear nota" }),
+      };
+    }
   }
 
   return {
